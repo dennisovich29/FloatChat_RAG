@@ -20,13 +20,13 @@ requests>=2.31.0
 beautifulsoup4>=4.12.0
 
 # Vector databases and embeddings
-# faiss-cpu>=1.7.4  # Use faiss-gpu if you have CUDA
+faiss-cpu>=1.7.4  # Use faiss-gpu if you have CUDA
 # faiss-gpu>=1.7.4  # Uncomment for GPU support
-# sentence-transformers>=2.2.0
-# chromadb>=0.4.0
+sentence-transformers>=2.2.0
+chromadb>=0.4.0
 
 # Utilities
-# tqdm>=4.65.0  # Progress bars
+tqdm>=4.65.0  # Progress bars
 
 # Optional: For Jupyter notebooks
 # jupyter>=1.0.0
