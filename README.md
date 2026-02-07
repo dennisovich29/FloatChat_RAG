@@ -35,7 +35,26 @@ FloatChat_RAG/
 │   └── config.yaml         # Settings
 ├── tests/                  # Unit tests
 └── docs/                   # Documentation
+    ├── setup/              # Installation & configuration
+    ├── manuals/            # User guides
+    └── technical/          # Technical details
 ```
+
+## Documentation
+
+### Setup & Configuration
+- [Quickstart Guide](docs/setup/QUICKSTART.md)
+- [Ollama Quickstart](docs/setup/OLLAMA_QUICKSTART.md)
+- [Setup for Friends](docs/setup/SETUP_FOR_FRIENDS.md)
+- [API Key Guide](docs/setup/API_KEY_GUIDE.md)
+
+### User Manuals
+- [Streamlit Guide](docs/manuals/STREAMLIT_GUIDE.md)
+
+### Technical Details
+- [Deployment Plan](docs/technical/WEB_DEPLOYMENT_PLAN.md)
+- [Free LLM Options](docs/technical/FREE_LLM_OPTIONS.md)
+- [Edge Cases](docs/technical/EDGE_CASES.md)
 
 ## Installation
 
@@ -144,117 +163,18 @@ pytest tests/
 source .venv/bin/activate
 
 # Format code
-ruff format src/ scripts/ mcp_server/
+ruff format src/ scripts/
 
 # Lint code
-ruff check src/ scripts/ mcp_server/
+ruff check src/ scripts/
 
 # Auto-fix linting issues
-ruff check --fix src/ scripts/ mcp_server/
+ruff check --fix src/ scripts/
 ```
 
 ### Type Checking
 ```bash
 mypy src/
-```
-
----
-
-## MCP Server Integration
-
-### What is MCP?
-
-The **Model Context Protocol (MCP)** server enables LLM clients like Claude Desktop to query your Argo float data using natural language.
-
-### Installation
-
-MCP SDK is already included in the dependencies. If you need to install it separately:
-
-```bash
-uv pip install mcp
-```
-
-### Running the MCP Server
-
-```bash
-python mcp_server/server.py
-```
-
-The server runs on stdio and communicates via the MCP protocol.
-
-### Claude Desktop Configuration
-
-Add this to your Claude Desktop config file:
-
-**macOS**: `~/Library/Application Support/Claude/claude_desktop_config.json`
-
-```json
-{
-  "mcpServers": {
-    "floatchat-rag": {
-      "command": "python",
-      "args": [
-        "/absolute/path/to/FloatChat_RAG/mcp_server/server.py"
-      ],
-      "cwd": "/absolute/path/to/FloatChat_RAG"
-    }
-  }
-}
-```
-
-### Available Tools
-
-1. **search_profiles** - Semantic search using natural language
-   ```
-   "Show me temperature profiles near the equator"
-   ```
-
-2. **get_statistics** - Database statistics
-   ```
-   "What's in the database?"
-   ```
-
-3. **get_float_details** - Specific float information
-   ```
-   "Get details for float 13857"
-   ```
-
-4. **query_database** - Custom SQL queries
-   ```
-   "Run: SELECT * FROM profiles WHERE latitude > 0 LIMIT 10"
-   ```
-
-5. **get_profiles_by_location** - Geographic filtering
-   ```
-   "Find profiles between 30°N-40°N and 120°W-130°W"
-   ```
-
-6. **get_profiles_by_date** - Temporal filtering
-   ```
-   "Show profiles from January 2023"
-   ```
-
-### Available Resources
-
-- **argo://profiles/recent** - Last 20 profiles
-- **argo://database/schema** - Database schema information
-
-### Example Usage in Claude
-
-Once configured, you can chat with your data:
-
-```
-You: "What ocean data do we have?"
-Claude: [Uses get_statistics tool]
-        "We have 188 profiles and 18,649 measurements from 2 floats..."
-
-You: "Show me profiles with warm water"
-Claude: [Uses search_profiles tool]
-        "Here are 5 profiles with warm water characteristics..."
-
-You: "Get details for float 13857"
-Claude: [Uses get_float_details tool]
-        "Float 13857 has 140 profiles recorded between..."
 ```
 
 ---
