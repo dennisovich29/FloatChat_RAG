@@ -1,0 +1,11 @@
+{
+    "mcpServers": {
+        "floatchat-rag": {
+            "command": "/Users/dennisprathyushpaul/Desktop/Projects/FloatChat_Rag/FloatChat_RAG/.venv/bin/python",
+            "args": [
+                "/Users/dennisprathyushpaul/Desktop/Projects/FloatChat_Rag/FloatChat_RAG/mcp_server/server.py"
+            ],
+            "cwd": "/Users/dennisprathyushpaul/Desktop/Projects/FloatChat_Rag/FloatChat_RAG"
+        }
+    }
+}

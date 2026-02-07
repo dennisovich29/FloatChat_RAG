@@ -1,0 +1,31 @@
+# FloatChat RAG Configuration
+
+# Data Pipeline Settings
+pipeline:
+  data_center: "aoml"
+  num_floats: 10
+  max_workers: 5
+  save_parquet: true
+
+# Database Settings
+database:
+  url: "sqlite:///data/databases/argo_data.db"
+  
+# Vector Database Settings
+vector_db:
+  persist_dir: "data/vector_db"
+  collection_name: "argo_profiles"
+  embedding_model: "all-MiniLM-L6-v2"
+  batch_size: 500
+
+# API Settings
+api:
+  base_url: "https://www.ncei.noaa.gov/thredds-ocean"
+  timeout: 30
+  retry_total: 5
+  retry_backoff: 1
+
+# Output Settings
+output:
+  parquet_dir: "data/processed"
+  raw_dir: "data/raw"

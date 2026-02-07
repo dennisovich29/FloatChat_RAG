@@ -1,269 +1,273 @@
-# FloatChat_RAG
+# FloatChat RAG - Argo Float Data Pipeline
 
-# ARGO Float Data Pipeline
-
-Automated pipeline to fetch, process, and analyze ARGO oceanographic float data from NOAA THREDDS server.
+A robust data pipeline for fetching, processing, and semantically searching Argo oceanographic float data with RAG (Retrieval-Augmented Generation) capabilities.
 
 ## Features
 
-- 🌊 Direct API access to ARGO float data (no downloads required)
-- 📊 Convert NetCDF to SQL and Parquet formats
-- 🔍 Vector database integration (FAISS & ChromaDB) for semantic search
-- 🚀 Fast, scalable, and production-ready
-
-## Setup Instructions
-
-### 1. Clone the Repository
-
-```bash
-git clone https://github.com/yourusername/argo-pipeline.git
-cd argo-pipeline
-```
-
-### 2. Create Virtual Environment
-
-**Important:** Always use a virtual environment!
-
-```bash
-# Create venv
-python -m venv venv
-
-# Activate it
-# On Linux/Mac:
-source venv/bin/activate
-
-# On Windows:
-venv\Scripts\activate
-```
-
-You should see `(venv)` in your terminal prompt.
-
-### 3. Install Dependencies
-
-```bash
-pip install -r requirements.txt
-```
-
-### 4. Verify Installation
-
-```bash
-python -c "import xarray; import pandas; print('✓ All dependencies installed!')"
-```
-
-## Quick Start
-
-### Fetch Data via API
-
-```bash
-python argo_api_pipeline.py
-```
-
-This will:
-1. Connect to NOAA THREDDS server
-2. Download 10 floats from AOML center
-3. Convert to SQL and Parquet
-4. Create `argo_data.db` database
-
-### Populate Vector Database
-
-```bash
-python argo_vector_db.py
-```
-
-This creates semantic search indexes for intelligent querying.
+- **Direct API Access**: Stream data from NOAA's THREDDS server without downloads
+- **Robust Fallback**: Automatic HTTPS download when OPeNDAP streaming fails
+- **Parallel Processing**: Multi-threaded data fetching with thread-safe database writes
+- **Vector Database**: Semantic search over float metadata using ChromaDB
+- **Multiple Formats**: Export to SQLite and Parquet
+- **Production Ready**: Proper package structure, configuration, and error handling
 
 ## Project Structure
 
 ```
-argo-pipeline/
-├── argo_api_pipeline.py      # Main data fetching & processing
-├── argo_vector_db.py          # Vector database integration
-├── requirements.txt           # Python dependencies
-├── .gitignore                # Git ignore rules
-├── README.md                 # This file
-├── venv/                     # Virtual environment (not in git)
-├── argo_data.db              # SQLite database (created)
-├── argo_output/              # Parquet files (created)
-├── faiss_index/              # FAISS indexes (created)
-└── chroma_db/                # ChromaDB storage (created)
+FloatChat_RAG/
+├── src/floatchat/          # Source code
+│   ├── pipeline/           # Data pipeline
+│   │   ├── client.py       # API client
+│   │   ├── processor.py    # Data processor
+│   │   └── runner.py       # Pipeline orchestration
+│   └── vector_db/          # Vector database
+│       ├── embedder.py     # Embeddings
+│       └── store.py        # ChromaDB storage
+├── scripts/                # Executable scripts
+│   ├── run_pipeline.py     # Run data pipeline
+│   ├── index_vectors.py    # Index vector DB
+│   └── check_db.py         # Database inspection
+├── data/                   # Data storage
+│   ├── databases/          # SQLite databases
+│   ├── processed/          # Parquet files
+│   └── vector_db/          # ChromaDB storage
+├── config/                 # Configuration
+│   └── config.yaml         # Settings
+├── tests/                  # Unit tests
+└── docs/                   # Documentation
 ```
 
-## Usage Examples
+## Installation
 
-### Example 1: Fetch Data
+### Option 1: Development Install
+```bash
+# Clone the repository
+git clone https://github.com/yourusername/FloatChat_RAG.git
+cd FloatChat_RAG
 
-```python
-from argo_api_pipeline import stream_multiple_floats
-
-stream_multiple_floats(
-    data_center='atlantic',
-    num_floats=50,
-    db_url="sqlite:///argo_data.db"
-)
+# Install in editable mode
+pip install -e .
 ```
 
-### Example 2: Query with SQL
-
-```python
-import pandas as pd
-from sqlalchemy import create_engine
-
-engine = create_engine("sqlite:///argo_data.db")
-
-query = """
-SELECT * FROM profiles 
-WHERE latitude BETWEEN 30 AND 40 
-AND longitude BETWEEN -80 AND -60
-"""
-data = pd.read_sql(query, engine)
+### Option 2: Regular Install
+```bash
+pip install -r requirements.txt
 ```
 
-### Example 3: Semantic Search
+## Quick Start
 
-```python
-from argo_vector_db import ArgoMetadataEmbedder, ArgoChromaStore
+### 1. Run the Data Pipeline
+```bash
+# Using the installed command
+floatchat-pipeline
 
-embedder = ArgoMetadataEmbedder()
-chroma = ArgoChromaStore()
+# Or directly
+python scripts/run_pipeline.py
+```
 
-query = "warm tropical Pacific profiles from 2024"
-embedding = embedder.embed_text(query)
+### 2. Index Vector Database
+```bash
+# Index existing data
+python scripts/index_vectors.py --index
+```
 
-results = chroma.search(embedding, k=10)
+### 3. Semantic Search
+```bash
+# Search for floats
+python scripts/index_vectors.py --query "warm water in the Atlantic" --limit 5
+```
+
+### 4. Check Database
+```bash
+python scripts/check_db.py
 ```
 
 ## Configuration
 
-### Using PostgreSQL Instead of SQLite
+Edit `config/config.yaml` to customize:
+- Data center and number of floats
+- Database paths
+- Vector DB settings
+- API parameters
 
+## Usage Examples
+
+### Programmatic Access
 ```python
-DB_URL = "postgresql://user:password@localhost:5432/argo_db"
-stream_multiple_floats(data_center='aoml', db_url=DB_URL)
+from floatchat import ArgoAPIClient, ArgoStreamProcessor
+
+# Fetch data
+client = ArgoAPIClient()
+floats = client.list_floats("aoml", max_floats=5)
+
+# Process data
+processor = ArgoStreamProcessor()
+for float_id in floats:
+    ds, _ = client.fetch_float_data("aoml", float_id)
+    if ds:
+        processor.stream_to_sql(ds, float_id, "aoml")
 ```
 
-### GPU Acceleration for Vector Search
-
-Edit `requirements.txt`:
-```txt
-# Replace:
-faiss-cpu>=1.7.4
-# With:
-faiss-gpu>=1.7.4
-```
-
-Then reinstall:
-```bash
-pip install -r requirements.txt --force-reinstall
-```
-
-## Troubleshooting
-
-### "Module not found" error
-```bash
-# Make sure venv is activated
-source venv/bin/activate  # or venv\Scripts\activate on Windows
-
-# Reinstall dependencies
-pip install -r requirements.txt
-```
-
-### "Database locked" error
-SQLite doesn't handle concurrent writes well. Use PostgreSQL for production:
-```bash
-# Install PostgreSQL
-sudo apt-get install postgresql postgresql-contrib
-
-# Create database
-sudo -u postgres createdb argo_db
-
-# Update DB_URL in code
-```
-
-### Slow downloads
-The THREDDS server may be slow. Use parallel processing:
+### Vector Search
 ```python
-# In argo_api_pipeline.py, use ThreadPoolExecutor for concurrent downloads
+from floatchat import ArgoMetadataEmbedder, ArgoChromaStore
+
+embedder = ArgoMetadataEmbedder()
+store = ArgoChromaStore()
+
+results = store.search("floats near the equator", embedder, k=5)
+print(results)
 ```
+
+## Architecture
+
+### Producer-Consumer Pattern
+- **5 Producer Threads**: Fetch data in parallel (I/O-bound)
+- **1 Consumer Thread**: Write to SQLite sequentially (prevents locking)
+- **Thread-Safe Queue**: Coordinates data flow
+
+### Hybrid Data Access
+1. **Primary**: OPeNDAP streaming (fast, direct)
+2. **Fallback**: HTTPS download (reliable when streaming fails)
+3. **Memory Safe**: Immediate cleanup of temporary files
 
 ## Development
 
-### Adding New Features
-
-1. Create a new branch:
-```bash
-git checkout -b feature/my-new-feature
-```
-
-2. Make changes and test
-
-3. Commit and push:
-```bash
-git add .
-git commit -m "Add new feature"
-git push origin feature/my-new-feature
-```
-
-4. Create a Pull Request on GitHub
-
-### Running Tests
-
+### Run Tests
 ```bash
 pytest tests/
 ```
 
-## Team Workflow
-
-### Daily Workflow
-
+### Code Formatting & Linting
 ```bash
-# 1. Pull latest changes
-git pull origin main
+# Activate venv first
+source .venv/bin/activate
 
-# 2. Activate venv
-source venv/bin/activate
+# Format code
+ruff format src/ scripts/ mcp_server/
 
-# 3. Update dependencies (if requirements.txt changed)
-pip install -r requirements.txt
+# Lint code
+ruff check src/ scripts/ mcp_server/
 
-# 4. Work on your code
-# ...
-
-# 5. Commit changes
-git add .
-git commit -m "Your message"
-git push origin your-branch
+# Auto-fix linting issues
+ruff check --fix src/ scripts/ mcp_server/
 ```
 
-### If Someone Updated Dependencies
-
+### Type Checking
 ```bash
-git pull origin main
-pip install -r requirements.txt --upgrade
+mypy src/
 ```
 
-## Data Sources
+---
 
-- **NOAA THREDDS Server**: https://www.ncei.noaa.gov/thredds-ocean/catalog/argo/gadr/catalog.html
-- **Argo Program**: https://argo.ucsd.edu/
+## MCP Server Integration
 
-## Contributing
+### What is MCP?
 
-1. Fork the repository
-2. Create your feature branch
-3. Commit your changes
-4. Push to the branch
-5. Create a Pull Request
+The **Model Context Protocol (MCP)** server enables LLM clients like Claude Desktop to query your Argo float data using natural language.
+
+### Installation
+
+MCP SDK is already included in the dependencies. If you need to install it separately:
+
+```bash
+uv pip install mcp
+```
+
+### Running the MCP Server
+
+```bash
+python mcp_server/server.py
+```
+
+The server runs on stdio and communicates via the MCP protocol.
+
+### Claude Desktop Configuration
+
+Add this to your Claude Desktop config file:
+
+**macOS**: `~/Library/Application Support/Claude/claude_desktop_config.json`
+
+```json
+{
+  "mcpServers": {
+    "floatchat-rag": {
+      "command": "python",
+      "args": [
+        "/absolute/path/to/FloatChat_RAG/mcp_server/server.py"
+      ],
+      "cwd": "/absolute/path/to/FloatChat_RAG"
+    }
+  }
+}
+```
+
+### Available Tools
+
+1. **search_profiles** - Semantic search using natural language
+   ```
+   "Show me temperature profiles near the equator"
+   ```
+
+2. **get_statistics** - Database statistics
+   ```
+   "What's in the database?"
+   ```
+
+3. **get_float_details** - Specific float information
+   ```
+   "Get details for float 13857"
+   ```
+
+4. **query_database** - Custom SQL queries
+   ```
+   "Run: SELECT * FROM profiles WHERE latitude > 0 LIMIT 10"
+   ```
+
+5. **get_profiles_by_location** - Geographic filtering
+   ```
+   "Find profiles between 30°N-40°N and 120°W-130°W"
+   ```
+
+6. **get_profiles_by_date** - Temporal filtering
+   ```
+   "Show profiles from January 2023"
+   ```
+
+### Available Resources
+
+- **argo://profiles/recent** - Last 20 profiles
+- **argo://database/schema** - Database schema information
+
+### Example Usage in Claude
+
+Once configured, you can chat with your data:
+
+```
+You: "What ocean data do we have?"
+Claude: [Uses get_statistics tool]
+        "We have 188 profiles and 18,649 measurements from 2 floats..."
+
+You: "Show me profiles with warm water"
+Claude: [Uses search_profiles tool]
+        "Here are 5 profiles with warm water characteristics..."
+
+You: "Get details for float 13857"
+Claude: [Uses get_float_details tool]
+        "Float 13857 has 140 profiles recorded between..."
+```
+
+---
 
 ## License
 
 MIT License - see LICENSE file
 
-## Contact
+## Contributing
 
-- Your Name - your.email@example.com
-- Project Link: https://github.com/yourusername/argo-pipeline
+Contributions welcome! Please open an issue or submit a pull request.
 
 ## Acknowledgments
 
-- NOAA for providing ARGO float data
-- Argo Program for oceanographic measurements
+- Data from [NOAA's THREDDS server](https://www.ncei.noaa.gov/thredds-ocean/)
+- Built with xarray, ChromaDB, and sentence-transformers
