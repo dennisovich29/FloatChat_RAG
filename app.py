@@ -14,7 +14,7 @@ from dotenv import load_dotenv
 from langchain.agents import AgentExecutor, create_tool_calling_agent
 from langchain.prompts import ChatPromptTemplate
 from langchain.tools import tool
-from langchain_anthropic import ChatAnthropic
+from langchain_google_genai import ChatGoogleGenerativeAI
 
 # Load environment variables
 load_dotenv()
@@ -232,10 +232,10 @@ def get_profiles_by_date(start_date: str, end_date: str) -> str:
 @st.cache_resource
 def init_agent():
     """Initialize LangChain agent with tools"""
-    api_key = os.getenv("ANTHROPIC_API_KEY")
+    api_key = os.getenv("GOOGLE_API_KEY")
     if not api_key:
-        st.error("⚠️ ANTHROPIC_API_KEY not found in environment variables!")
-        st.info("Create a `.env` file with: `ANTHROPIC_API_KEY=your_key_here`")
+        st.error("⚠️ GOOGLE_API_KEY not found in environment variables!")
+        st.info("Create a `.env` file with: `GOOGLE_API_KEY=your_key_here`")
         st.stop()
     
     tools = [
@@ -247,9 +247,9 @@ def init_agent():
         get_profiles_by_date,
     ]
     
-    llm = ChatAnthropic(
-        model="claude-3-5-sonnet-20241022",
-        api_key=api_key,
+    llm = ChatGoogleGenerativeAI(
+        model="gemini-1.5-flash",
+        google_api_key=api_key,
         temperature=0
     )
     
@@ -409,6 +409,6 @@ if prompt:
 st.markdown("---")
 st.markdown("""
 <div style="text-align: center; color: #64748b; font-size: 0.875rem;">
-    Built with Streamlit + LangChain + Claude | Data from Argo Float Program
+    Built with Streamlit + LangChain + Google Gemini | Data from Argo Float Program
 </div>
 """, unsafe_allow_html=True)
