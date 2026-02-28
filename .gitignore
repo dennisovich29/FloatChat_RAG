@@ -262,6 +262,8 @@ downloads/
 # Vector databases
 faiss_index/
 chroma_db/
+data/vector_db/*.sqlite3
+data/vector_db/*/
 *.index
 *_metadata.json
 
