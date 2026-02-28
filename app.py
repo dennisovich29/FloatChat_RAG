@@ -11,9 +11,9 @@ from pathlib import Path
 
 import streamlit as st
 from dotenv import load_dotenv
-from langchain.agents import AgentExecutor, create_tool_calling_agent
-from langchain.core.prompts import ChatPromptTemplate
-from langchain.core.tools import tool
+from langchain_classic.agents import AgentExecutor, create_tool_calling_agent
+from langchain_classic.prompts import ChatPromptTemplate
+from langchain_classic.tools import tool
 from langchain_google_genai import ChatGoogleGenerativeAI
 
 # Load environment variables
@@ -248,9 +248,11 @@ def init_agent():
     ]
     
     llm = ChatGoogleGenerativeAI(
-        model="gemini-1.5-flash",
+        model="gemini-flash-latest",
         google_api_key=api_key,
-        temperature=0
+        temperature=0,
+        max_retries=3,
+        timeout=None
     )
     
     prompt = ChatPromptTemplate.from_messages([
@@ -258,13 +260,18 @@ def init_agent():
         
 You have access to tools to search profiles, get statistics, query the database, and filter by location/date.
 
+CRITICAL INSTRUCTIONS:
+1. SEMANTIC SEARCH: If the user asks for concepts like "warm water", ALWAYS use `search_profiles` first.
+2. DATABASE SCHEMA: 
+   - Table `profiles`: profile_id, float_id, cycle_number, datetime, latitude, longitude
+   - Table `measurements`: float_id, profile_id, level, pressure, temperature, salinity
+3. SQL RULES: Only use standard SELECT queries. Do not use PRAGMA.
+4. MISSING DATA RULE: If `query_database` returns 0 rows, DO NOT try again. Simply tell the user: "I found the profile metadata, but the exact temperature measurements are currently missing from the database."
+
 When presenting results:
 - Be concise and clear
-- Highlight interesting patterns
-- Suggest follow-up queries
-- Format data in readable tables when appropriate
-
-The database contains real Argo float data from 1997-2001 with temperature, salinity, and pressure measurements."""),
+- Format data in readable Markdown tables
+"""),
         ("human", "{input}"),
         ("placeholder", "{agent_scratchpad}"),
     ])
@@ -275,7 +282,7 @@ The database contains real Argo float data from 1997-2001 with temperature, sali
         tools=tools,
         verbose=True,
         handle_parsing_errors=True,
-        max_iterations=5,
+        max_iterations=4,
         return_intermediate_steps=True
     )
     
@@ -378,6 +385,13 @@ if prompt:
             try:
                 result = agent_executor.invoke({"input": prompt})
                 response = result["output"]
+                
+                # Gemini returns a list of content blocks — extract the text
+                if isinstance(response, list):
+                    response = "\n".join(
+                        block.get("text", str(block)) if isinstance(block, dict) else str(block)
+                        for block in response
+                    )
                 
                 # Extract tools used
                 tools_used = []
