@@ -12,8 +12,8 @@ from pathlib import Path
 import streamlit as st
 from dotenv import load_dotenv
 from langchain.agents import AgentExecutor, create_tool_calling_agent
-from langchain.prompts import ChatPromptTemplate
-from langchain.tools import tool
+from langchain.core.prompts import ChatPromptTemplate
+from langchain.core.tools import tool
 from langchain_google_genai import ChatGoogleGenerativeAI
 
 # Load environment variables
@@ -275,7 +275,8 @@ The database contains real Argo float data from 1997-2001 with temperature, sali
         tools=tools,
         verbose=True,
         handle_parsing_errors=True,
-        max_iterations=5
+        max_iterations=5,
+        return_intermediate_steps=True
     )
     
     return agent_executor
